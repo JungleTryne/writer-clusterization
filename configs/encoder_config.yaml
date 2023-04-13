@@ -1,0 +1,27 @@
+dataset:
+  train_path: data/sample_fonts # TODO: Fix
+  val_path: data/sample_fonts
+  test_path: data/sample_fonts
+
+dataloader:
+  batch_size: 64
+  num_workers: 8
+
+model:
+  backbone: resnet18
+  number_of_classes: 10399
+
+optimizer:
+  name: Adam
+  params:
+    lr: 0.00002
+
+scheduler:
+  decay_factor: 0.999974416048
+
+training:
+  epochs: 1000
+  device: mps
+
+debug: true
+

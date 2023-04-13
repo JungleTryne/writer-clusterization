@@ -10,6 +10,8 @@ from torch.utils.data import Dataset
 
 from typing import Dict, Any
 
+from utils.constants import DEBUG_FILES_THRESHOLD
+
 
 def get_file_description(file_path):
     sample_info = file_path.split('/')[-1].split(".")[0].split('-')
@@ -37,7 +39,7 @@ class SegmentsDataset(Dataset):
         self.files = os.listdir(self.root_dir)
 
         if debug:
-            self.files = self.files[:300]
+            self.files = self.files[:DEBUG_FILES_THRESHOLD]
 
         self.authors_indexes = dict()
         from_idx, to_idx = 0, 0
