@@ -4,7 +4,7 @@ import albumentations as A
 """
 Preprocessing pipeline for the images.
 """
-preprocessing_pipeline = A.Compose([
+ssn_preprocessing_pipeline = A.Compose([
     A.OneOf([
         A.HorizontalFlip(p=0.5),
         A.Flip(p=0.5),

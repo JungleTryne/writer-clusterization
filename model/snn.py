@@ -7,9 +7,11 @@ import torch.nn as nn
 import torchvision.models as models
 import torch.optim as optim
 
-import pytorch_lightning as pl
+from torch.utils.data import DataLoader
 
 from dataset.segments import SegmentsDataset
+from utils.preprocessing import ssn_preprocessing_pipeline
+import pytorch_lightning as pl
 
 
 class SiameseNN(pl.LightningModule):
@@ -83,3 +85,29 @@ class SiameseNN(pl.LightningModule):
         loss = self.step(test_batch, batch_idx, self.test_dataset)
         self.log("test_loss", loss, on_step=True, prog_bar=True, logger=True)
         return loss
+
+
+def train_snn(config: Dict[str, Any]):
+    debug = config["debug"]
+    train_dataset_path = config["dataset"]["train_path"]
+    val_dataset_path = config["dataset"]["val_path"]
+    test_dataset_path = config["dataset"]["test_path"]
+
+    train_dataset = SegmentsDataset(train_dataset_path, debug, ssn_preprocessing_pipeline)
+    val_dataset = SegmentsDataset(val_dataset_path, debug)
+    test_dataset = SegmentsDataset(test_dataset_path, debug)
+
+    model = SiameseNN(config, train_dataset, val_dataset, test_dataset)
+
+    batch_size = config["dataloader"]["batch_size"]
+    num_workers = config["dataloader"]["num_workers"]
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers)
+
+    trainer = pl.Trainer(
+        accelerator=config["training"]["device"],
+        max_epochs=config["training"]["epochs"],
+        devices=[0],
+    )
+
+    trainer.fit(model, train_loader, val_loader)
