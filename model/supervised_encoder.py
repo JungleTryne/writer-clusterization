@@ -1,5 +1,7 @@
+import os.path
 from typing import Dict, Any
 
+import pandas as pd
 import torch
 import torch.nn as nn
 import torchvision.models as models
@@ -10,7 +12,13 @@ from torch.optim.lr_scheduler import ExponentialLR
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
-from dataset.synthetic_segments import SyntheticSegments
+from dataloader.collate import collate_fn
+from dataset.fonts_dataset import FontsDataset
+
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+
+import seaborn as sns
 
 
 class SupervisedEncoder(pl.LightningModule):
@@ -24,9 +32,16 @@ class SupervisedEncoder(pl.LightningModule):
         num_classes = config["model"]["number_of_classes"]
 
         self.encoder = getattr(models, backbone)(weights=False, num_classes=num_classes)
+        self.classifier = self.encoder.fc
+        self.encoder.fc = nn.Identity()
+
         self.criterion = nn.CrossEntropyLoss()
 
+        self.val_embeddings = []
+        self.val_classes = []
+
         self.config = config
+        self.logs_path = config["logs"]
 
     def forward(self, x):
         embedding = self.encoder(x)
@@ -51,7 +66,8 @@ class SupervisedEncoder(pl.LightningModule):
     def step(self, batch, _batch_idx):
         images = batch["image_tensor"]
         targets = batch["font_id"]
-        classes: torch.Tensor = self.encoder(images)
+        embeddings: torch.Tensor = self.forward(images)
+        classes: torch.Tensor = self.classifier(embeddings)
 
         loss = self.criterion(classes, targets)
 
@@ -62,9 +78,37 @@ class SupervisedEncoder(pl.LightningModule):
         self.log("train_loss", loss, on_step=True, prog_bar=True, logger=True)
         return loss
 
+    def on_validation_epoch_end(self):
+        embeddings = torch.cat(self.val_embeddings).detach().cpu().numpy()
+        classes = torch.cat(self.val_classes).detach().cpu().numpy()
+        assert embeddings.shape[0] == classes.shape[0]
+
+        tsne = TSNE(n_components=2, learning_rate="auto", init="pca").fit_transform(embeddings)
+
+        dt = pd.DataFrame(data={
+            "x": tsne[:, 0],
+            "y": tsne[:, 1],
+            "class": classes
+        })
+
+        plt.clf()
+        sns.scatterplot(data=dt, x="x", y="y", hue="class", palette="hls")
+        plt.savefig(os.path.join(self.logs_path, f"{self.current_epoch}-tsne.jpg"))
+
+        self.val_classes = []
+        self.val_embeddings = []
+
     def validation_step(self, val_batch, batch_idx):
-        loss = self.step(val_batch, batch_idx)
-        self.log("val_loss", loss, on_step=True, prog_bar=True, logger=True)
+        images = val_batch["image_tensor"]
+        targets = val_batch["font_id"]
+        embeddings = self.forward(images)
+
+        classes: torch.Tensor = self.classifier(embeddings)
+        loss = self.criterion(classes, targets)
+        self.log("val_loss", loss, prog_bar=True, logger=True)
+        self.val_embeddings.append(embeddings)
+        self.val_classes.append(targets)
+
         return loss
 
     def test_step(self, test_batch, batch_idx):
@@ -75,23 +119,31 @@ class SupervisedEncoder(pl.LightningModule):
 
 def train_encoder(config: Dict[str, Any]):
     debug = config["debug"]
-    train_dataset_path = config["dataset"]["train_path"]
-    val_dataset_path = config["dataset"]["val_path"]
+
+    dataset_root = config["dataset"]["root_path"]
+
+    train_fonts_file = "fonts_debug.json" if debug else "fonts_train.json"
+    val_fonts_file = "fonts_debug.json" if debug else "fonts_val.json"
+
+    train_words = os.path.join(dataset_root, "words_train.json")
+    val_words = os.path.join(dataset_root, "words_val.json")
+    train_fonts = os.path.join(dataset_root, train_fonts_file)
+    val_fonts = os.path.join(dataset_root, val_fonts_file)
 
     transform = transforms.Compose([
         transforms.ToTensor()
         # TODO: do i need to resize?
     ])
 
-    train_dataset = SyntheticSegments(train_dataset_path, debug, transform)
-    val_dataset = SyntheticSegments(val_dataset_path, debug, transform)
+    train_dataset = FontsDataset(dataset_root, train_words, train_fonts, transform)
+    val_dataset = FontsDataset(dataset_root, val_words, val_fonts, transform)
 
     model = SupervisedEncoder(config)
 
     batch_size = config["dataloader"]["batch_size"]
     num_workers = config["dataloader"]["num_workers"]
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn)
 
     trainer = pl.Trainer(
         accelerator=config["training"]["device"],

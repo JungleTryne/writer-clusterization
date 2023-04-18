@@ -1,10 +1,8 @@
 dataset:
-  train_path: data/sample_fonts # TODO: Fix
-  val_path: data/sample_fonts
-  test_path: data/sample_fonts
+  root_path: data/fonts
 
 dataloader:
-  batch_size: 1
+  batch_size: 32
   num_workers: 8
 
 model:
@@ -25,3 +23,4 @@ training:
 
 debug: true
 
+logs: logs
