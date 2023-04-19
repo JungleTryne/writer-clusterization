@@ -83,7 +83,7 @@ class SupervisedEncoder(pl.LightningModule):
         classes = torch.cat(self.val_classes).detach().cpu().numpy()
         assert embeddings.shape[0] == classes.shape[0]
 
-        tsne = TSNE(n_components=2, learning_rate="auto", init="pca").fit_transform(embeddings)
+        tsne = TSNE(n_components=2, learning_rate="auto", init="pca", random_state=42).fit_transform(embeddings)
 
         dt = pd.DataFrame(data={
             "x": tsne[:, 0],
