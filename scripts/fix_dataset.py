@@ -34,7 +34,6 @@ def fix_file(root, config, font_key, word_key):
 
 @click.command()
 @click.option("--config_path", required=True, type=str)
-@click.option("")
 def main(config_path: str):
     with open(str(config_path), "r") as config_file:
         config = yaml.safe_load(config_file)
