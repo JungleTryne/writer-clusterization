@@ -1,5 +1,11 @@
 dataset:
   root_path: data/fonts
+  fonts_train: fonts_train.json
+  fonts_val: fonts_val.json
+  fonts_test: fonts_test.json
+  words_train: words_train.json
+  words_val: words_val.json
+  words_test: words_test.json
 
 dataloader:
   batch_size: 32

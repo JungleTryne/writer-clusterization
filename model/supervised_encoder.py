@@ -122,11 +122,11 @@ def train_encoder(config: Dict[str, Any]):
 
     dataset_root = config["dataset"]["root_path"]
 
-    train_fonts_file = "fonts_debug.json" if debug else "fonts_train.json"
-    val_fonts_file = "fonts_debug.json" if debug else "fonts_val.json"
+    train_fonts_file = "fonts_debug.json" if debug else config["dataset"]["fonts_train"]
+    val_fonts_file = "fonts_debug.json" if debug else config["dataset"]["fonts_val"]
 
-    train_words = os.path.join(dataset_root, "words_train.json")
-    val_words = os.path.join(dataset_root, "words_val.json")
+    train_words = os.path.join(dataset_root, config["dataset"]["words_train"])
+    val_words = os.path.join(dataset_root, config["dataset"]["words_val"])
     train_fonts = os.path.join(dataset_root, train_fonts_file)
     val_fonts = os.path.join(dataset_root, val_fonts_file)
 
