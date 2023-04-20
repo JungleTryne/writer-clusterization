@@ -1,8 +1,8 @@
 dataset:
-  root_path: data/fonts
-  fonts_train: fonts_train.json
-  fonts_val: fonts_val.json
-  fonts_test: fonts_test.json
+  root_path: data/v1.0
+  fonts_train: fonts_train_cut.json
+  fonts_val: fonts_val_cut.json
+  fonts_test: fonts_test_cut.json
   words_train: words_train.json
   words_val: words_val.json
   words_test: words_test.json

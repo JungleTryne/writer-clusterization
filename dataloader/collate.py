@@ -11,5 +11,5 @@ def collate_fn(samples):
 
     return {
         "image_tensor": torch.stack(images).float(),
-        "font_id": torch.IntTensor(font_ids)
+        "font_id": torch.LongTensor(font_ids)
     }
