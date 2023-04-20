@@ -11,7 +11,7 @@ def fix(root, fonts_list, words_list):
     for font in tqdm(fonts_list):
         broken = False
         for word in words_list:
-            path = os.path.join(root, font, f"{word}.json")
+            path = os.path.join(root, font, f"{word}.jpg")
             if not os.path.exists(path):
                 broken = True
                 break
