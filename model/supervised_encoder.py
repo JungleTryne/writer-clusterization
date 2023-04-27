@@ -19,6 +19,7 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 
 import seaborn as sns
+from pytorch_lightning.loggers import TensorBoardLogger
 
 
 class SupervisedEncoder(pl.LightningModule):
@@ -132,7 +133,6 @@ def train_encoder(config: Dict[str, Any]):
 
     transform = transforms.Compose([
         transforms.ToTensor()
-        # TODO: do i need to resize?
     ])
 
     train_dataset = FontsDataset(dataset_root, train_words, train_fonts, transform)
@@ -144,8 +144,10 @@ def train_encoder(config: Dict[str, Any]):
     num_workers = config["dataloader"]["num_workers"]
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn)
+    logger = TensorBoardLogger("tb_logs", name="resnet-18")
 
     trainer = pl.Trainer(
+        logger=logger,
         accelerator=config["training"]["device"],
         max_epochs=config["training"]["epochs"],
         devices=[0],

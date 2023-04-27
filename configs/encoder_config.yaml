@@ -1,5 +1,5 @@
 dataset:
-  root_path: data/v1.0
+  root_path: data/fonts
   fonts_train: fonts_train_cut.json
   fonts_val: fonts_val_cut.json
   fonts_test: fonts_test_cut.json
@@ -8,8 +8,8 @@ dataset:
   words_test: words_test.json
 
 dataloader:
-  batch_size: 32
-  num_workers: 8
+  batch_size: 128
+  num_workers: 48
 
 model:
   backbone: resnet18
@@ -24,9 +24,9 @@ scheduler:
   decay_factor: 0.999974416048
 
 training:
-  epochs: 1000
-  device: mps
+  epochs: 15
+  device: cuda
 
-debug: true
+debug: false
 
 logs: logs
