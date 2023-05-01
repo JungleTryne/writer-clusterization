@@ -1,3 +1,5 @@
+model_name: snn
+
 dataset:
   train_path: data/segments_train
   val_path: data/segments_val

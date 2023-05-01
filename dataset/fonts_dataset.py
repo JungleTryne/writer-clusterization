@@ -20,6 +20,9 @@ class FontsDataset(Dataset):
 
         self.transform = transform
 
+    def number_of_fonts(self) -> int:
+        return len(self.fonts_list)
+
     def __len__(self) -> int:
         return len(self.words_list) * len(self.fonts_list)
 

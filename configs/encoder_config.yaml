@@ -1,3 +1,5 @@
+model_name: encoder
+
 dataset:
   root_path: data/fonts
   fonts_train: fonts_train_cut.json

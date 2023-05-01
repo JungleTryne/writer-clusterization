@@ -1,0 +1,17 @@
+model: encoder
+checkpoint_path: ./lightning_logs/version_64/checkpoints/epoch=1-step=1250.ckpt
+
+dataset:
+  root_path: data/fonts
+  fonts_test: fonts_test_cut.json
+  words_test: words_test.json
+
+dataloader:
+  batch_size: 128
+  num_workers: 8
+
+cluster:
+  min_samples: 2
+  max_samples: 5
+
+debug: true
