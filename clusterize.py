@@ -18,9 +18,13 @@ from dataset.fonts_dataset import FontsDataset
 from model.supervised_encoder import SupervisedEncoder
 
 from sklearn.metrics import silhouette_score
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, AgglomerativeClustering
 
+import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import umap
 
 
 @click.command()
@@ -63,14 +67,44 @@ def main(test_config_path: click.Path, model_config_path: click.Path):
             embeddings.append(encoder(batch["image_tensor"]))
     embeddings = torch.cat(embeddings).detach().cpu().numpy()
 
-    s_scores = []
-    n_samples_range = range(test_config["cluster"]["min_samples"], test_config["cluster"]["max_samples"])
-    for n_samples in tqdm(n_samples_range, desc="Testing silhouette"):
-        kmeans = KMeans(n_clusters=n_samples, random_state=1, n_init="auto").fit(embeddings)
-        s_scores.append(silhouette_score(embeddings, kmeans.labels_))
+    print("Applying UMAP...")
+    reducer = umap.UMAP(**test_config["umap"])
+    reducer.fit(embeddings)
+    embeddings_umap = reducer.transform(embeddings)
+    print("UMAP result shape:", embeddings_umap.shape)
 
-    plt.plot(n_samples_range, s_scores)
-    plt.savefig("s.png")
+    s_scores = []
+    n_samples_range = list(range(test_config["cluster"]["min_samples"], test_config["cluster"]["max_samples"], test_config["cluster"]["step"]))
+    for n_samples in tqdm(n_samples_range, desc="Testing silhouette"):
+        clustering = AgglomerativeClustering(n_clusters=n_samples).fit(embeddings_umap)
+        s_scores.append(silhouette_score(embeddings_umap, clustering.labels_))
+        print(n_samples, s_scores[-1])
+
+    data_s = {
+        "s_x": n_samples_range,
+        "s_y": s_scores,
+    }
+    df_s = pd.DataFrame(data=data_s)
+
+    sns.lineplot(data=df_s, x="s_x", y="s_y")
+    plt.savefig("silhouette.png")
+
+
+    # s_scores = np.array(s_scores)
+    # n_samples = n_samples_range[np.argmax(s_scores)]
+    # clustering = AgglomerativeClustering(n_clusters=n_samples).fit(embeddings_umap)
+
+    # data = {
+    #     "x": embeddings_umap[:, 0],
+    #     "y": embeddings_umap[:, 1],
+    #     "labels": clustering.labels_,
+    # }
+
+    # df = pd.DataFrame(data=data)
+
+    # sns.scatterplot(data=df, x="x", y="y", hue="labels")
+    # plt.savefig("umap.png")
+
 
 
 if __name__ == "__main__":

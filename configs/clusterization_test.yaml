@@ -1,8 +1,8 @@
 model: encoder
-checkpoint_path: ./lightning_logs/version_64/checkpoints/epoch=1-step=1250.ckpt
+checkpoint_path: tb_logs/resnet-18/version_6/checkpoints/epoch=14-step=468750.ckpt
 
 dataset:
-  root_path: data/fonts
+  root_path: data/v1.0
   fonts_test: fonts_test_cut.json
   words_test: words_test.json
 
@@ -11,7 +11,14 @@ dataloader:
   num_workers: 8
 
 cluster:
-  min_samples: 2
-  max_samples: 5
+  min_samples: 170
+  max_samples: 250
+  step: 10
 
-debug: true
+umap:
+  n_neighbors: 30
+  min_dist: 0.0
+  n_components: 25
+  random_state: 42
+
+debug: false
