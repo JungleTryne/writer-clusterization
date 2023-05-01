@@ -18,9 +18,8 @@ from dataset.fonts_dataset import FontsDataset
 from model.supervised_encoder import SupervisedEncoder
 
 from sklearn.metrics import silhouette_score
-from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.cluster import AgglomerativeClustering
 
-import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -88,23 +87,6 @@ def main(test_config_path: click.Path, model_config_path: click.Path):
 
     sns.lineplot(data=df_s, x="s_x", y="s_y")
     plt.savefig("silhouette.png")
-
-
-    # s_scores = np.array(s_scores)
-    # n_samples = n_samples_range[np.argmax(s_scores)]
-    # clustering = AgglomerativeClustering(n_clusters=n_samples).fit(embeddings_umap)
-
-    # data = {
-    #     "x": embeddings_umap[:, 0],
-    #     "y": embeddings_umap[:, 1],
-    #     "labels": clustering.labels_,
-    # }
-
-    # df = pd.DataFrame(data=data)
-
-    # sns.scatterplot(data=df, x="x", y="y", hue="labels")
-    # plt.savefig("umap.png")
-
 
 
 if __name__ == "__main__":
