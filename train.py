@@ -19,9 +19,9 @@ def main(config_path: click.Path):
     with open(str(config_path), "r") as config_file:
         config = yaml.safe_load(config_file)
 
-    if config["model"] == "snn":
+    if config["model_name"] == "snn":
         train_snn(config)
-    elif config["model"] == "encoder":
+    elif config["model_name"] == "encoder":
         train_encoder(config)
     else:
         raise NotImplementedError(f"There is no model {config['model']}")

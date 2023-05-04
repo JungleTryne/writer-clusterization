@@ -304,3 +304,10 @@ wandb
 data
 lightning_logs
 logs
+
+silhouette.png
+umap.png
+training.stats
+tb_logs
+configs
+logs_old

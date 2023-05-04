@@ -1,11 +1,11 @@
 model_name: encoder
 
 dataset:
-  root_path: data/fonts
-  fonts_train: fonts_train_cut.json
+  root_path: data/v1.0
+  fonts_train: fonts_train_2000.json
   fonts_val: fonts_val_cut.json
   fonts_test: fonts_test_cut.json
-  words_train: words_train.json
+  words_train: words_train_2000.json
   words_val: words_val.json
   words_test: words_test.json
 
@@ -15,12 +15,13 @@ dataloader:
 
 model:
   backbone: resnet18
-  number_of_classes: 10400
+  number_of_classes: 4113
 
 optimizer:
-  name: Adam
+  name: SGD
   params:
-    lr: 0.00002
+    lr: 0.1
+    momentum: 0.9
 
 scheduler:
   decay_factor: 0.999974416048

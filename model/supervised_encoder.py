@@ -7,7 +7,7 @@ import torch.nn as nn
 import torchvision.models as models
 import torch.optim as optim
 from torchvision import transforms
-from torch.optim.lr_scheduler import ExponentialLR
+from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR
 
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 
 import seaborn as sns
 from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_metric_learning import losses
 
 
 class SupervisedEncoder(pl.LightningModule):
@@ -33,10 +34,10 @@ class SupervisedEncoder(pl.LightningModule):
         num_classes = config["model"]["number_of_classes"]
 
         self.encoder = getattr(models, backbone)(weights=False, num_classes=num_classes)
-        self.classifier = self.encoder.fc
+        #self.classifier = self.encoder.fc
         self.encoder.fc = nn.Identity()
 
-        self.criterion = nn.CrossEntropyLoss()
+        self.criterion = losses.ArcFaceLoss(num_classes, 512)
 
         self.val_embeddings = []
         self.val_classes = []
@@ -53,9 +54,7 @@ class SupervisedEncoder(pl.LightningModule):
         params = self.config["optimizer"]["params"]
         optimizer = getattr(optim, opt_name)(self.parameters(), **params)
 
-        decay_factor = self.config["scheduler"]["decay_factor"]
-        scheduler = ExponentialLR(optimizer, gamma=decay_factor)
-
+        scheduler = MultiStepLR(optimizer, milestones=[6, 9], gamma=0.1)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
@@ -68,9 +67,8 @@ class SupervisedEncoder(pl.LightningModule):
         images = batch["image_tensor"]
         targets = batch["font_id"]
         embeddings: torch.Tensor = self.forward(images)
-        classes: torch.Tensor = self.classifier(embeddings)
-
-        loss = self.criterion(classes, targets)
+        # classes: torch.Tensor = self.classifier(embeddings)
+        loss = self.criterion(embeddings, targets)
 
         return loss
 
@@ -104,8 +102,8 @@ class SupervisedEncoder(pl.LightningModule):
         targets = val_batch["font_id"]
         embeddings = self.forward(images)
 
-        classes: torch.Tensor = self.classifier(embeddings)
-        loss = self.criterion(classes, targets)
+        # classes: torch.Tensor = self.classifier(embeddings)
+        loss = self.criterion(embeddings, targets)
         self.log("val_loss", loss, prog_bar=True, logger=True)
         self.val_embeddings.append(embeddings)
         self.val_classes.append(targets)
@@ -144,7 +142,7 @@ def train_encoder(config: Dict[str, Any]):
     num_workers = config["dataloader"]["num_workers"]
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn)
-    logger = TensorBoardLogger("tb_logs", name="resnet-18")
+    logger = TensorBoardLogger("tb_logs", name="resnet-18-metric-learning")
 
     trainer = pl.Trainer(
         logger=logger,
