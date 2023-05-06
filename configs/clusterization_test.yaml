@@ -1,9 +1,9 @@
 model: encoder
-checkpoint_path: tb_logs/resnet-18/version_6/checkpoints/epoch=14-step=468750.ckpt
+checkpoint_path: checkpoints/cross_entropy.ckpt
 
 dataset:
-  root_path: data/v1.0
-  fonts_test: fonts_test_cut.json
+  root_path: data/fonts
+  fonts_test: fonts_debug.json
   words_test: words_test.json
 
 dataloader:

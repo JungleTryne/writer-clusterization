@@ -1,5 +1,10 @@
 import warnings
 
+from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning
+
+warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
+
 # Filter out the warning message for ShardedTensor
 warnings.filterwarnings("ignore", category=UserWarning, message="Please use DTensor instead and we are deprecating "
                                                                 "ShardedTensor.")
@@ -27,10 +32,10 @@ import umap
 
 
 @click.command()
-@click.option("--test-config-path", type=click.Path(exists=True), required=True, help="Path to clusterization configuration")
-@click.option("--model-config-path", type=click.Path(exists=True), required=True, help="Path to clusterization configuration")
-def main(test_config_path: click.Path, model_config_path: click.Path):
-    with open(str(test_config_path), "r") as config_file:
+@click.option("--cluster-config-path", type=click.Path(exists=True), required=True, help="Path to clusterization configuration")
+@click.option("--model-config-path", type=click.Path(exists=True), required=True, help="Path to model configuration")
+def main(cluster_config_path: click.Path, model_config_path: click.Path):
+    with open(str(cluster_config_path), "r") as config_file:
         test_config = yaml.safe_load(config_file)
 
     with open(str(model_config_path), "r") as config_file:

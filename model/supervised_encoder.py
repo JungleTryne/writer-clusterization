@@ -7,7 +7,6 @@ import torch.nn as nn
 import torchvision.models as models
 import torch.optim as optim
 from torchvision import transforms
-from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR
 
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
@@ -23,21 +22,30 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_metric_learning import losses
 
 
+# TorchVision ResNet-18 output before classification layer
+EMBEDDING_SIZE = 512
+
+
 class SupervisedEncoder(pl.LightningModule):
-    def __init__(
-            self,
-            config: Dict[str, Any],
-    ):
+    def __init__(self, config: Dict[str, Any]):
         super(SupervisedEncoder, self).__init__()
 
         backbone = config["model"]["backbone"]
         num_classes = config["model"]["number_of_classes"]
 
-        self.encoder = getattr(models, backbone)(weights=False, num_classes=num_classes)
-        #self.classifier = self.encoder.fc
-        self.encoder.fc = nn.Identity()
+        self.encoder = getattr(models, backbone)(weights=None, num_classes=num_classes)
 
-        self.criterion = losses.ArcFaceLoss(num_classes, 512)
+        criterion_name = config["model"]["criterion"]
+        if criterion_name == "cross_entropy":
+            self.classifier = self.encoder.fc
+            self.criterion = nn.CrossEntropyLoss()
+        elif criterion_name == "arcface":
+            self.classifier = None
+            self.criterion = losses.ArcFaceLoss(num_classes, EMBEDDING_SIZE)
+        else:
+            raise Exception(f"Invalid criterion: {criterion_name}")
+
+        self.encoder.fc = nn.Identity()
 
         self.val_embeddings = []
         self.val_classes = []
@@ -51,10 +59,12 @@ class SupervisedEncoder(pl.LightningModule):
 
     def configure_optimizers(self):
         opt_name = self.config["optimizer"]["name"]
-        params = self.config["optimizer"]["params"]
-        optimizer = getattr(optim, opt_name)(self.parameters(), **params)
+        opt_params = self.config["optimizer"]["params"]
+        optimizer = getattr(optim, opt_name)(self.parameters(), **opt_params)
 
-        scheduler = MultiStepLR(optimizer, milestones=[6, 9], gamma=0.1)
+        sch_name = self.config["scheduler"]["name"]
+        sch_params = self.config["scheduler"]["params"]
+        scheduler = getattr(optim.lr_scheduler, sch_name)(self.parameters(), **sch_params)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
@@ -67,7 +77,10 @@ class SupervisedEncoder(pl.LightningModule):
         images = batch["image_tensor"]
         targets = batch["font_id"]
         embeddings: torch.Tensor = self.forward(images)
-        # classes: torch.Tensor = self.classifier(embeddings)
+
+        if self.config["model"]["criterion"] == "cross_entropy":
+            embeddings = self.classifier(embeddings)
+
         loss = self.criterion(embeddings, targets)
 
         return loss
@@ -102,7 +115,9 @@ class SupervisedEncoder(pl.LightningModule):
         targets = val_batch["font_id"]
         embeddings = self.forward(images)
 
-        # classes: torch.Tensor = self.classifier(embeddings)
+        if self.config["model"]["criterion"] == "cross_entropy":
+            embeddings = self.classifier(embeddings)
+
         loss = self.criterion(embeddings, targets)
         self.log("val_loss", loss, prog_bar=True, logger=True)
         self.val_embeddings.append(embeddings)
