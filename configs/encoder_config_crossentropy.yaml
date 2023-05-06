@@ -1,0 +1,36 @@
+model_name: encoder
+
+dataset:
+  root_path: data/fonts
+  fonts_train: fonts_train_2000.json
+  fonts_val: fonts_val_cut.json
+  fonts_test: fonts_test_cut.json
+  words_train: words_train_2000.json
+  words_val: words_val.json
+  words_test: words_test.json
+
+dataloader:
+  batch_size: 128
+  num_workers: 48
+
+model:
+  backbone: resnet18
+  criterion: cross_entropy
+  number_of_classes: 2042
+
+optimizer:
+  name: Adam
+  params:
+    lr: 0.00002
+
+scheduler:
+  name: ExponentialLR
+  params:
+    decay_factor: 0.999974416048
+
+training:
+  epochs: 15
+  device: cuda
+
+debug: false
+logs: logs
