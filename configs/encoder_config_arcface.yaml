@@ -1,7 +1,7 @@
 model_name: encoder
 
 dataset:
-  root_path: data/v1.0
+  root_path: data/fonts
   fonts_train: fonts_train_2000.json
   fonts_val: fonts_val_cut.json
   fonts_test: fonts_test_cut.json
