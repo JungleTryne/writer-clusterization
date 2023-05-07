@@ -22,22 +22,24 @@ from dataloader.collate import collate_fn
 from dataset.fonts_dataset import FontsDataset
 from model.supervised_encoder import SupervisedEncoder
 
+import sklearn.cluster
 from sklearn.metrics import silhouette_score
-from sklearn.cluster import AgglomerativeClustering
+# from sklearn.cluster import AgglomerativeClustering, KMeans
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import umap
+import numpy as np
 
 
 @click.command()
 @click.option("--cluster-config-path", type=click.Path(exists=True), required=True, help="Path to clusterization configuration")
-@click.option("--model-config-path", type=click.Path(exists=True), required=True, help="Path to model configuration")
-def main(cluster_config_path: click.Path, model_config_path: click.Path):
+def main(cluster_config_path: click.Path):
     with open(str(cluster_config_path), "r") as config_file:
         test_config = yaml.safe_load(config_file)
 
+    model_config_path = test_config["model_config_path"]
     with open(str(model_config_path), "r") as config_file:
         model_config = yaml.safe_load(config_file)
 
@@ -70,6 +72,7 @@ def main(cluster_config_path: click.Path, model_config_path: click.Path):
         for batch in tqdm(test_loader, desc="Getting embeddings"):
             embeddings.append(encoder(batch["image_tensor"]))
     embeddings = torch.cat(embeddings).detach().cpu().numpy()
+    print("Embeddings shape:", embeddings.shape)
 
     print("Applying UMAP...")
     reducer = umap.UMAP(**test_config["umap"])
@@ -78,11 +81,15 @@ def main(cluster_config_path: click.Path, model_config_path: click.Path):
     print("UMAP result shape:", embeddings_umap.shape)
 
     s_scores = []
-    n_samples_range = list(range(test_config["cluster"]["min_samples"], test_config["cluster"]["max_samples"], test_config["cluster"]["step"]))
-    for n_samples in tqdm(n_samples_range, desc="Testing silhouette"):
-        clustering = AgglomerativeClustering(n_clusters=n_samples).fit(embeddings_umap)
-        s_scores.append(silhouette_score(embeddings_umap, clustering.labels_))
-        print(n_samples, s_scores[-1])
+    min_samples = test_config["cluster"]["min_samples"] 
+    max_samples = test_config["cluster"]["max_samples"]
+    step = test_config["cluster"]["step"]
+    n_samples_range = list(range(min_samples, max_samples, step))
+    p_bar = tqdm(n_samples_range, desc="Testing silhouette")
+    for n_samples in p_bar:
+        clustering = getattr(sklearn.cluster, test_config["clustering_method"])(n_clusters=n_samples).fit(embeddings_umap)
+        s_scores.append(silhouette_score(embeddings_umap, clustering.labels_, **test_config["silhouette_params"]))
+        p_bar.set_description(f"Testing silhouette: {n_samples} samples -> {s_scores[-1]}")
 
     data_s = {
         "s_x": n_samples_range,
@@ -91,7 +98,7 @@ def main(cluster_config_path: click.Path, model_config_path: click.Path):
     df_s = pd.DataFrame(data=data_s)
 
     sns.lineplot(data=df_s, x="s_x", y="s_y")
-    plt.savefig("silhouette.png")
+    plt.savefig(test_config["plot_output_path"])
 
 
 if __name__ == "__main__":

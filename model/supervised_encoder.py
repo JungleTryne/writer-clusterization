@@ -64,7 +64,7 @@ class SupervisedEncoder(pl.LightningModule):
 
         sch_name = self.config["scheduler"]["name"]
         sch_params = self.config["scheduler"]["params"]
-        scheduler = getattr(optim.lr_scheduler, sch_name)(self.parameters(), **sch_params)
+        scheduler = getattr(optim.lr_scheduler, sch_name)(optimizer, **sch_params)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {

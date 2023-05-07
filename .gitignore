@@ -311,3 +311,4 @@ training.stats
 tb_logs
 logs_old
 checkpoints
+plots
