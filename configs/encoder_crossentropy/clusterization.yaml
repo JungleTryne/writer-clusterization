@@ -3,17 +3,16 @@ checkpoint_path: checkpoints/cross_entropy.ckpt
 model_config_path: configs/encoder_crossentropy/encoder_config_crossentropy.yaml
 
 dataset:
-  root_path: data/fonts
-  fonts_test: fonts_test_100.json
-  words_test: words_test.json
+  type: "iam_resized"
+  root_path: data/iam_resized
 
 dataloader:
-  batch_size: 128
+  batch_size: 1
   num_workers: 8
 
 cluster:
-  min_samples: 60
-  max_samples: 150
+  min_samples: 550
+  max_samples: 750
   step: 10
 
 umap:
@@ -21,14 +20,18 @@ umap:
   min_dist: 0.0
   n_components: 32
   random_state: 42
-  metric: "eucledian"
 
-clustering_method: "KMeans"
+clustering_method: "kmeans_gpu"
 clustering_params:
-  ~
+#  n_init: 10
+#  batch_size: 128
+#  random_state: 42
+#  batch_size: 1024
+  max_iter: 300
+#  verbose: 2
 
 silhouette_params:
-  metric: "eucledian"
+  metric: "euclidean"
 
-plot_output_path: "plots/crossentropy_silhouette.png"
+plot_output_path: "plots/crossentropy_silhouette_iam.png"
 debug: false

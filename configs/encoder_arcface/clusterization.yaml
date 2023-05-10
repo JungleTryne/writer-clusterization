@@ -3,18 +3,17 @@ checkpoint_path: checkpoints/arcface.ckpt
 model_config_path: configs/encoder_arcface/encoder_config_arcface.yaml
 
 dataset:
-  root_path: data/fonts
-  fonts_test: fonts_test_100.json
-  words_test: words_test.json
+  type: "iam"
+  root_path: data/iam
 
 dataloader:
   batch_size: 128
   num_workers: 8
 
 cluster:
-  min_samples: 60
-  max_samples: 150
-  step: 10
+  min_samples: 2
+  max_samples: 50
+  step: 1
 
 umap:
   n_neighbors: 30
