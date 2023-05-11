@@ -52,6 +52,7 @@ def main(cluster_config_path: click.Path, visualize: bool):
         transforms.ToTensor()
     ])
 
+    print("Initializing dataset")
     debug = test_config["debug"]
     dataset_root = test_config["dataset"]["root_path"]
     dataset_type = test_config["dataset"]["type"]
@@ -69,28 +70,36 @@ def main(cluster_config_path: click.Path, visualize: bool):
     else:
         raise Exception(f"Dataset unknown type: {dataset_type}")
 
+    print("Initializing dataloader")
     batch_size = test_config["dataloader"]["batch_size"]
     num_workers = test_config["dataloader"]["num_workers"]
     test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn)
 
+    print("Initializing model")
     if test_config["model"] == "encoder":
         encoder = SupervisedEncoder.load_from_checkpoint(test_config["checkpoint_path"], config=model_config)
     else:
         raise Exception(f"Invalid model: {test_config['model']}")
     encoder.eval()
-    encoder.to("mps")
+    encoder.to("cuda")
 
-    embeddings = []
-    with torch.no_grad():
-        for batch in tqdm(test_loader, desc="Getting embeddings"):
-            image_batch = batch["image_tensor"]
-            image_batch = image_batch.to("mps")
-            embeddings.append(encoder(image_batch))
+    print("Creating embeddings")
+    if os.path.exists("./embeddings.pt"):
+        embeddings = torch.load("embeddings.pt")
+        print("Loaded embeddings from cache")
+    else:
+        print("No cached embeddings found")
+        embeddings = []
+        with torch.no_grad():
+            for batch in tqdm(test_loader, desc="Getting embeddings"):
+                image_batch = batch["image_tensor"]
+                image_batch = image_batch.to("cuda")
+                embeddings.append(encoder(image_batch))
 
-    embeddings = torch.cat(embeddings)
-    torch.save(embeddings, "embeddings.pt")
-
+        embeddings = torch.cat(embeddings)
+        torch.save(embeddings, "embeddings.pt")
     embeddings = embeddings.detach().cpu().numpy()
+    
     print("Embeddings shape:", embeddings.shape)
 
     print("Applying UMAP...")

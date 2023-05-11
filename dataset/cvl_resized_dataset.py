@@ -15,7 +15,7 @@ class CVLResizedDataset(Dataset):
     def __getitem__(self, idx: int):
         image_path = self.images[idx]
         image_tensor = cv2.imread(image_path, -1)
-        image_tensor = cv2.cvtColor(image_tensor, cv2.COLOR_GRAY2RGB)
+        #image_tensor = cv2.cvtColor(image_tensor, cv2.COLOR_GRAY2RGB)
         if self.transform is not None:
             image_tensor = self.transform(image_tensor)
 
