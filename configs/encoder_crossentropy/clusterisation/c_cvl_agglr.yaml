@@ -1,0 +1,35 @@
+model: encoder
+checkpoint_path: checkpoints/cross_entropy.ckpt
+model_config_path: configs/encoder_crossentropy/encoder_config_crossentropy.yaml
+
+dataset:
+  type: "cvl_resized"
+  root_path: data/cvl_resized
+
+dataloader:
+  batch_size: 128
+  num_workers: 8
+
+# Correct number: 310
+cluster:
+  min_samples: 290
+  max_samples: 330
+  step: 10
+
+umap:
+  n_neighbors: 30
+  min_dist: 0.0
+  n_components: 32
+  random_state: 129
+
+clustering_method: "AgglomerativeClustering"
+clustering_params:
+  ~
+
+silhouette_params:
+  ~
+
+embedding_path: "embeddings/ce_cvl.pt"
+
+plot_output_path: "plots/ce_cvl_agglr.png"
+debug: false

@@ -1,0 +1,37 @@
+model: encoder
+checkpoint_path: checkpoints/arcface.ckpt
+model_config_path: configs/encoder_arcface/encoder_config_arcface.yaml
+
+dataset:
+  type: "cvl_resized"
+  root_path: data/cvl_resized
+
+dataloader:
+  batch_size: 128
+  num_workers: 8
+
+# Correct number: 310
+cluster:
+  min_samples: 290
+  max_samples: 330
+  step: 10
+
+umap:
+  n_neighbors: 30
+  min_dist: 0.0
+  n_components: 32
+  random_state: 129
+  metric: "cosine"
+
+clustering_method: "AgglomerativeClustering"
+clustering_params:
+  linkage: "average"
+  metric: "cosine"
+
+silhouette_params:
+  metric: "cosine"
+
+embedding_path: "embeddings/arcface_cvl.pt"
+
+plot_output_path: "plots/arcface_cvl_agglr.png"
+debug: false

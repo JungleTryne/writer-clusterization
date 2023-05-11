@@ -5,36 +5,32 @@ model_config_path: configs/encoder_crossentropy/encoder_config_crossentropy.yaml
 dataset:
   type: "cvl_resized"
   root_path: data/cvl_resized
-  fonts_test: "fonts_test_cut.json"
-  words_test: "words_test.json"
 
 dataloader:
-  batch_size: 1
+  batch_size: 128
   num_workers: 8
 
+# Correct number: 310
 cluster:
-  min_samples: 280
-  max_samples: 340
+  min_samples: 290
+  max_samples: 330
   step: 10
 
 umap:
   n_neighbors: 30
   min_dist: 0.0
   n_components: 32
-  random_state: 42
+  random_state: 129
 
-clustering_method: "AgglomerativeClustering"
+clustering_method: "KMeans"
 clustering_params:
-  ~
-  # n_init: 10
-#  batch_size: 128
-#  random_state: 42
-#  batch_size: 1024
-  # max_iter: 300
-#  verbose: 2
+  n_init: 10
+  max_iter: 300
 
 silhouette_params:
-  metric: "euclidean"
+  ~
 
-plot_output_path: "plots/ce_silhouette_cvl_aggl.png"
+embedding_path: "embeddings/ce_cvl.pt"
+
+plot_output_path: "plots/ce_cvl_kmeans.png"
 debug: false

@@ -77,15 +77,16 @@ def main(cluster_config_path: click.Path, visualize: bool):
 
     print("Initializing model")
     if test_config["model"] == "encoder":
-        encoder = SupervisedEncoder.load_from_checkpoint(test_config["checkpoint_path"], config=model_config)
+        encoder = SupervisedEncoder.load_from_checkpoint(test_config["checkpoint_path"], config=model_config, map_location=torch.device('mps'))
     else:
         raise Exception(f"Invalid model: {test_config['model']}")
     encoder.eval()
-    encoder.to("cuda")
+    encoder.to("mps")
 
     print("Creating embeddings")
-    if os.path.exists("./embeddings.pt"):
-        embeddings = torch.load("embeddings.pt")
+    embeddings_path = test_config["embedding_path"]
+    if os.path.exists(embeddings_path):
+        embeddings = torch.load(embeddings_path)
         print("Loaded embeddings from cache")
     else:
         print("No cached embeddings found")
@@ -93,11 +94,11 @@ def main(cluster_config_path: click.Path, visualize: bool):
         with torch.no_grad():
             for batch in tqdm(test_loader, desc="Getting embeddings"):
                 image_batch = batch["image_tensor"]
-                image_batch = image_batch.to("cuda")
+                image_batch = image_batch.to("mps")
                 embeddings.append(encoder(image_batch))
 
         embeddings = torch.cat(embeddings)
-        torch.save(embeddings, "embeddings.pt")
+        torch.save(embeddings, embeddings_path)
     embeddings = embeddings.detach().cpu().numpy()
     
     print("Embeddings shape:", embeddings.shape)

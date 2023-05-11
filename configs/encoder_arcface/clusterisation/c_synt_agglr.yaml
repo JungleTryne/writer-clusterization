@@ -3,8 +3,9 @@ checkpoint_path: checkpoints/arcface.ckpt
 model_config_path: configs/encoder_arcface/encoder_config_arcface.yaml
 
 dataset:
-  type: "iam"
-  root_path: data/iam
+  type: "syntetic"
+  root_path: data/fonts
+
 
 dataloader:
   batch_size: 128
@@ -24,10 +25,13 @@ umap:
 
 clustering_method: "AgglomerativeClustering"
 clustering_params:
+  linkage: "average"
   metric: "cosine"
 
 silhouette_params:
   metric: "cosine"
 
-plot_output_path: "plots/arcface_silhouette.png"
+embedding_path: "embeddings/arcface_synt.pt"
+
+plot_output_path: "plots/arcface_synt_agglr.png"
 debug: false
