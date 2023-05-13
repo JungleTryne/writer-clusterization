@@ -27,7 +27,6 @@ from model.supervised_encoder import SupervisedEncoder
 
 import sklearn.cluster
 from sklearn.metrics import silhouette_score
-# from sklearn.cluster import AgglomerativeClustering, KMeans
 
 import matplotlib.pyplot as plt
 import pandas as pd

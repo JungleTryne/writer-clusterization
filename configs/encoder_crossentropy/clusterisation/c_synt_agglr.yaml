@@ -23,10 +23,10 @@ umap:
 
 clustering_method: "AgglomerativeClustering"
 clustering_params:
-  ~
+  metric: "euclidean"
 
 silhouette_params:
-  ~
+  metric: "euclidean"
 
 embedding_path: "embeddings/ce_synt.pt"
 

@@ -23,9 +23,10 @@ umap:
   random_state: 129
   metric: "cosine"
 
-clustering_method: "AgglomerativeClustering"
+clustering_method: "KMeans"
 clustering_params:
-  metric: "cosine"
+  n_init: 10
+  max_iter: 300
 
 silhouette_params:
   metric: "cosine"

@@ -29,7 +29,7 @@ clustering_params:
   max_iter: 300
 
 silhouette_params:
-  ~
+  metric: "euclidean"
 
 embedding_path: "embeddings/ce_iam.pt"
 
