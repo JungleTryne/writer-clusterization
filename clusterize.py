@@ -36,6 +36,9 @@ import umap
 import kmeans_gpu
 
 
+DEVICE = "cuda"
+
+
 @click.command()
 @click.option("--cluster-config-path", type=click.Path(exists=True), required=True, help="Path to clusterization configuration")
 @click.option("--visualize", is_flag=True, help="Visualize")
@@ -76,11 +79,11 @@ def main(cluster_config_path: click.Path, visualize: bool):
 
     print("Initializing model")
     if test_config["model"] == "encoder":
-        encoder = SupervisedEncoder.load_from_checkpoint(test_config["checkpoint_path"], config=model_config, map_location=torch.device('mps'))
+        encoder = SupervisedEncoder.load_from_checkpoint(test_config["checkpoint_path"], config=model_config, map_location=torch.device(DEVICE))
     else:
         raise Exception(f"Invalid model: {test_config['model']}")
     encoder.eval()
-    encoder.to("mps")
+    encoder.to(DEVICE)
 
     print("Creating embeddings")
     embeddings_path = test_config["embedding_path"]
@@ -93,7 +96,7 @@ def main(cluster_config_path: click.Path, visualize: bool):
         with torch.no_grad():
             for batch in tqdm(test_loader, desc="Getting embeddings"):
                 image_batch = batch["image_tensor"]
-                image_batch = image_batch.to("mps")
+                image_batch = image_batch.to(DEVICE)
                 embeddings.append(encoder(image_batch))
 
         embeddings = torch.cat(embeddings)
@@ -103,14 +106,22 @@ def main(cluster_config_path: click.Path, visualize: bool):
     print("Embeddings shape:", embeddings.shape)
 
     print("Applying UMAP...")
+    umap_embeddings_path = embeddings_path + ".umap"
     umap_config = test_config["umap"]
+
     if visualize:
+        raise Exception("It is broken with cache")
         umap_config["n_components"] = 2
 
-    reducer = umap.UMAP(**umap_config)
-    reducer.fit(embeddings)
-    embeddings_umap = reducer.transform(embeddings)
-    print("UMAP result shape:", embeddings_umap.shape)
+    if os.path.exists(umap_embeddings_path):
+        embeddings_umap = torch.load(umap_embeddings_path)
+        print("Loaded UMAP embeddings from cache")
+    else:
+        reducer = umap.UMAP(**umap_config)
+        reducer.fit(embeddings)
+        embeddings_umap = reducer.transform(embeddings)
+        torch.save(embeddings_umap, umap_embeddings_path)
+        print("UMAP result shape:", embeddings_umap.shape)
 
     if visualize:
         data_viz = {
