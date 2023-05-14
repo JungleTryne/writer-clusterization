@@ -34,4 +34,3 @@ class SyntheticSegments(Dataset):
             "image_tensor": image_tensor,
             "font_id": font_id
         }
-        

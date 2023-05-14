@@ -1,17 +1,21 @@
 model_name: snn
 
 dataset:
-  train_path: data/segments_train
-  val_path: data/segments_val
-  test_path: data/segments_test
+  root_path: data/fonts
+  fonts_train: fonts_train_2000.json
+  fonts_val: fonts_val_cut.json
+  fonts_test: fonts_test_cut.json
+  words_train: words_train_2000.json
+  words_val: words_val.json
+  words_test: words_test.json
 
 dataloader:
-  batch_size: 64
-  num_workers: 8
+  batch_size: 128
+  num_workers: 48
 
 model:
   backbone: resnet18
-  alpha: 2.0
+  alpha: 5.0
 
 optimizer:
   name: Adam
@@ -20,7 +24,7 @@ optimizer:
 
 training:
   epochs: 200
-  device: mps
+  device: cuda
 
 debug: false
 

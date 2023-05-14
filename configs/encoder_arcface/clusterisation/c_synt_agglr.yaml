@@ -3,18 +3,20 @@ checkpoint_path: checkpoints/arcface.ckpt
 model_config_path: configs/encoder_arcface/encoder_config_arcface.yaml
 
 dataset:
-  type: "syntetic"
+  type: "synthetic"
   root_path: data/fonts
-
+  fonts_test: fonts_test_cut.json
+  words_test: words_test.json
 
 dataloader:
   batch_size: 128
   num_workers: 8
 
+# Correct: 392
 cluster:
-  min_samples: 2
-  max_samples: 50
-  step: 1
+  min_samples: 350
+  max_samples: 450
+  step: 10
 
 umap:
   n_neighbors: 30

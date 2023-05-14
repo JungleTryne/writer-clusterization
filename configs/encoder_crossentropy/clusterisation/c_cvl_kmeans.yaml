@@ -12,8 +12,8 @@ dataloader:
 
 # Correct number: 310
 cluster:
-  min_samples: 290
-  max_samples: 330
+  min_samples: 250
+  max_samples: 350
   step: 10
 
 umap:

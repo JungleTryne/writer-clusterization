@@ -13,7 +13,7 @@ dataloader:
 
 # Correct number: 657
 cluster:
-  min_samples: 620
+  min_samples: 600
   max_samples: 690
   step: 10
 
