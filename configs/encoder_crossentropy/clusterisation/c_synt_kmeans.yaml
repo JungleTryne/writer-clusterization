@@ -5,17 +5,17 @@ model_config_path: configs/encoder_crossentropy/encoder_config_crossentropy.yaml
 dataset:
   type: "synthetic"
   root_path: data/fonts
-  fonts_test: fonts_test_cut.json
+  fonts_test: fonts_test_100.json
   words_test: words_test.json
 
 dataloader:
   batch_size: 128
   num_workers: 8
 
-# Correct: 392
+# Correct: 100
 cluster:
-  min_samples: 350
-  max_samples: 450
+  min_samples: 50
+  max_samples: 150
   step: 10
 
 umap:
@@ -33,7 +33,7 @@ clustering_params:
 silhouette_params:
   metric: "euclidean"
 
-embedding_path: "embeddings/ce_synt.pt"
+embedding_path: "embeddings/ce_synt_100.pt"
 
 plot_output_path: "plots/ce_synt_kmeans.png"
 debug: false

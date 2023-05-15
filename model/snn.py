@@ -113,7 +113,7 @@ def train_snn(config: Dict[str, Any]):
 
     batch_size = config["dataloader"]["batch_size"]
     num_workers = config["dataloader"]["num_workers"]
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn)
 
     logger = TensorBoardLogger("tb_logs", name="resnet-18-snn")

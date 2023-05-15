@@ -23,15 +23,16 @@ umap:
   min_dist: 0.0
   n_components: 32
   random_state: 129
+  metric: "cosine"
 
-clustering_method: "AgglomerativeClustering"
+clustering_method: "MeanShift"
 clustering_params:
-  metric: "euclidean"
+  max_iter: 300
 
 silhouette_params:
   metric: "euclidean"
 
 embedding_path: "embeddings/ce_synt_100.pt"
 
-plot_output_path: "plots/ce_synt_agglr.png"
+plot_output_path: "plots/ce_synt_kmeans.png"
 debug: false

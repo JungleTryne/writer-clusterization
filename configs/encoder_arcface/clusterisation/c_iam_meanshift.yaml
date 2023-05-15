@@ -3,19 +3,17 @@ checkpoint_path: checkpoints/arcface.ckpt
 model_config_path: configs/encoder_arcface/encoder_config_arcface.yaml
 
 dataset:
-  type: "synthetic"
-  root_path: data/fonts
-  fonts_test: fonts_test_100.json
-  words_test: words_test.json
+  type: "iam_resized"
+  root_path: data/iam_resized
 
 dataloader:
   batch_size: 128
   num_workers: 8
 
-# Correct: 100
+# Correct number: 657
 cluster:
-  min_samples: 50
-  max_samples: 150
+  min_samples: 600
+  max_samples: 690
   step: 10
 
 umap:
@@ -25,15 +23,14 @@ umap:
   random_state: 129
   metric: "cosine"
 
-clustering_method: "KMeans"
+clustering_method: "MeanShift"
 clustering_params:
-  n_init: 10
   max_iter: 300
 
 silhouette_params:
   metric: "cosine"
 
-embedding_path: "embeddings/arcface_synt_100.pt"
+embedding_path: "embeddings/arcface_iam.pt"
 
-plot_output_path: "plots/arcface_synt_kmeans.png"
+plot_output_path: "plots/arcface_iam_kmeans.png"
 debug: false

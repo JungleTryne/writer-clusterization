@@ -133,6 +133,14 @@ def main(cluster_config_path: click.Path, visualize: bool):
         plt.show()
         return
 
+    if test_config["clustering_method"] == "MeanShift":
+        print("{} clustring method determines the number of clusters itself".format(test_config["clustering_method"]))
+        clustering = getattr(sklearn.cluster, test_config["clustering_method"])(**test_config["clustering_params"]).fit(embeddings_umap)
+        print(f"Number of clusters: {clustering.labels_.max()}")
+        score = silhouette_score(embeddings_umap, clustering.labels_, **test_config["silhouette_params"])
+        print(f"Silhouette score: {score}")
+        return
+
     s_scores = []
     min_samples = test_config["cluster"]["min_samples"] 
     max_samples = test_config["cluster"]["max_samples"]

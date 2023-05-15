@@ -3,19 +3,17 @@ checkpoint_path: checkpoints/cross_entropy.ckpt
 model_config_path: configs/encoder_crossentropy/encoder_config_crossentropy.yaml
 
 dataset:
-  type: "synthetic"
-  root_path: data/fonts
-  fonts_test: fonts_test_100.json
-  words_test: words_test.json
+  type: "cvl_resized"
+  root_path: data/cvl_resized
 
 dataloader:
   batch_size: 128
   num_workers: 8
 
-# Correct: 100
+# Correct number: 310
 cluster:
-  min_samples: 50
-  max_samples: 150
+  min_samples: 250
+  max_samples: 350
   step: 10
 
 umap:
@@ -24,14 +22,14 @@ umap:
   n_components: 32
   random_state: 129
 
-clustering_method: "AgglomerativeClustering"
+clustering_method: "MeanShift"
 clustering_params:
-  metric: "euclidean"
+  max_iter: 300
 
 silhouette_params:
   metric: "euclidean"
 
-embedding_path: "embeddings/ce_synt_100.pt"
+embedding_path: "embeddings/ce_cvl.pt"
 
-plot_output_path: "plots/ce_synt_agglr.png"
+plot_output_path: "plots/ce_cvl_kmeans.png"
 debug: false
