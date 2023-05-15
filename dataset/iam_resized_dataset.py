@@ -1,12 +1,17 @@
+from typing import Optional
+
 import cv2
 from glob import glob
 from torch.utils.data import Dataset
 
 
 class IAMResizedDataset(Dataset):
-    def __init__(self, root_dir: str, transform=None):
+    def __init__(self, root_dir: str, transform=None, cut: Optional[int] = None):
         self.fonts_dir = root_dir
-        self.images = glob(f"{self.fonts_dir}/*.png")
+        self.images = sorted(glob(f"{self.fonts_dir}/*.png"))
+        if cut is not None:
+            self.images = self.images[:cut]
+
         self.transform = transform
 
     def __len__(self) -> int:
@@ -18,9 +23,19 @@ class IAMResizedDataset(Dataset):
         if self.transform is not None:
             image_tensor = self.transform(image_tensor)
 
-        font_id = "-".join(image_path.split("/")[-1].split("-")[0:2])
+        font_id = self._get_font_id(image_path)
         return {
             "image_tensor": image_tensor,
             "font_id": font_id
         }
 
+    def number_of_authors(self) -> int:
+        fonts = set()
+        for image_path in self.images:
+            font_id = self._get_font_id(image_path)
+            fonts.add(font_id)
+        return len(fonts)
+
+    @staticmethod
+    def _get_font_id(image_path):
+        return "-".join(image_path.split("/")[-1].split("-")[0:2])
