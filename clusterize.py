@@ -16,6 +16,7 @@ import torch
 import yaml
 from tqdm import tqdm
 from torch.utils.data import DataLoader
+from torch.nn.functional import normalize
 from torchvision import transforms
 
 from dataloader.collate import collate_fn
@@ -26,7 +27,8 @@ from dataset.cvl_resized_dataset import CVLResizedDataset
 from model.supervised_encoder import SupervisedEncoder
 
 import sklearn.cluster
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, rand_score
+from sklearn import preprocessing
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -102,27 +104,32 @@ def main(cluster_config_path: click.Path, visualize: bool):
 
         embeddings = torch.cat(embeddings)
         torch.save(embeddings, embeddings_path)
+        
     embeddings = embeddings.detach().cpu().numpy()
     
     print("Embeddings shape:", embeddings.shape)
 
-    print("Applying UMAP...")
-    umap_embeddings_path = embeddings_path + ".umap"
-    umap_config = test_config["umap"]
-
-    if visualize:
-        raise Exception("It is broken with cache")
-        umap_config["n_components"] = 2
-
-    if os.path.exists(umap_embeddings_path):
-        embeddings_umap = torch.load(umap_embeddings_path)
-        print("Loaded UMAP embeddings from cache")
+    if "umap" not in test_config:
+        embeddings_umap = embeddings
     else:
-        reducer = umap.UMAP(**umap_config)
-        reducer.fit(embeddings)
-        embeddings_umap = reducer.transform(embeddings)
-        torch.save(embeddings_umap, umap_embeddings_path)
-        print("UMAP result shape:", embeddings_umap.shape)
+        print("Applying UMAP...")
+        umap_embeddings_path = embeddings_path + ".umap"
+        umap_config = test_config["umap"]
+
+        if visualize:
+            raise Exception("It is broken with cache")
+            umap_config["n_components"] = 2
+
+        if os.path.exists(umap_embeddings_path):
+            embeddings_umap = torch.load(umap_embeddings_path)
+            print("Loaded UMAP embeddings from cache")
+        else:
+            reducer = umap.UMAP(**umap_config)
+            reducer.fit(embeddings)
+            embeddings_umap = reducer.transform(embeddings)
+            embeddings_umap = preprocessing.StandardScaler().fit_transform(embeddings_umap)
+            torch.save(embeddings_umap, umap_embeddings_path)
+            print("UMAP result shape:", embeddings_umap.shape)
 
     if visualize:
         data_viz = {
@@ -143,6 +150,11 @@ def main(cluster_config_path: click.Path, visualize: bool):
         return
 
     s_scores = []
+    c_scores = []
+    r_scores = []
+
+    labels_true = test_dataset.get_labels()
+
     min_samples = test_config["cluster"]["min_samples"] 
     max_samples = test_config["cluster"]["max_samples"]
     step = test_config["cluster"]["step"]
@@ -161,18 +173,30 @@ def main(cluster_config_path: click.Path, visualize: bool):
             labels = clustering.labels_
 
         s_scores.append(silhouette_score(embeddings_umap, labels, **test_config["silhouette_params"]))
-        p_bar.set_description(f"Testing silhouette: {n_samples} samples -> {s_scores[-1]}")
+        c_scores.append(calinski_harabasz_score(embeddings_umap, labels))
+        r_scores.append(rand_score(labels_true, labels))
 
-    data_s = {
-        "s_x": n_samples_range,
-        "s_y": s_scores,
+        p_bar.set_description(f"Testing metrics: {n_samples} samples -> {s_scores[-1]} {c_scores[-1]} {r_scores[-1]}")
+
+    data = {
+        "clusters_num": n_samples_range,
+        "silhouette": s_scores,
+        "calinski_harabasz": c_scores,
+        "rand": r_scores,
     }
-    df_s = pd.DataFrame(data=data_s)
+    df = pd.DataFrame(data=data)
 
-    sns.lineplot(data=df_s, x="s_x", y="s_y")
-    plt.axvline(x=test_config["cluster"]["correct"])
+    sns.lineplot(data=df_s, x="clusters_num", y="silhouette").set(title='Silhouette score')
+    plt.axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
+    plt.savefig("silhouette_" + test_config["plot_output_path"])
 
-    plt.savefig(test_config["plot_output_path"])
+    sns.lineplot(data=df_s, x="clusters_num", y="calinski_harabasz").set(title='Calinski-Harabasz score')
+    plt.axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
+    plt.savefig("calinski_harabasz_" + test_config["plot_output_path"])
+
+    sns.lineplot(data=df_s, x="clusters_num", y="rand").set(title='Rand score')
+    plt.axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
+    plt.savefig("rand_" + test_config["plot_output_path"])
 
 
 if __name__ == "__main__":

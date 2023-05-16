@@ -3,6 +3,7 @@ from typing import Optional
 import cv2
 from glob import glob
 from torch.utils.data import Dataset
+import numpy as np
 
 
 class CVLResizedDataset(Dataset):
@@ -27,6 +28,12 @@ class CVLResizedDataset(Dataset):
             "image_tensor": image_tensor,
             "font_id": font_id
         }
+
+    def get_labels(self):
+        result = []
+        for image in self.images:
+            result.append(self._get_font_id(image))
+        return np.array(result)
 
     def number_of_authors(self) -> int:
         fonts = set()

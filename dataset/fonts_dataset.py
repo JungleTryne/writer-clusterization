@@ -54,6 +54,14 @@ class FontsDataset(Dataset):
             "font_id": font_id
         }
 
+    def get_labels(self):
+        result = []
+        for idx in self.__len__():
+            font_idx = idx // len(self.words_list)
+            font_id = self._get_font_id(self.fonts_list[font_idx])
+            result.append(font_id)
+        return np.array(result)
+
     def _get_font_id(self, font_path):
         return int(font_path.split("/")[1].split("_")[0])
         
