@@ -38,4 +38,4 @@ class IAMResizedDataset(Dataset):
 
     @staticmethod
     def _get_font_id(image_path):
-        return "-".join(image_path.split("/")[-1].split("-")[0:2])
+        return int(image_path.split("/")[-1].split("-")[0])

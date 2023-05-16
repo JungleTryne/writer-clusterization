@@ -1,19 +1,20 @@
 model: encoder
-checkpoint_path: checkpoints/cross_entropy.ckpt
-model_config_path: configs/encoder_crossentropy/encoder_config_crossentropy.yaml
+checkpoint_path: checkpoints/arcface.ckpt
+model_config_path: configs/encoder_arcface/encoder_config_arcface.yaml
+
 
 dataset:
-  type: "cvl_resized"
-  root_path: data/cvl_resized
+  type: "iam_resized"
+  root_path: data/iam_resized
   cut: 20000
 
 dataloader:
   batch_size: 128
   num_workers: 8
 
-# Correct number: 53
+# Correct number: 117
 cluster:
-  correct: 53
+  correct: 117
   min_samples: 10
   max_samples: 350
   step: 10
@@ -31,7 +32,7 @@ clustering_params:
 silhouette_params:
   metric: "euclidean"
 
-embedding_path: "embeddings/ce_cvl_cut20k.pt"
+embedding_path: "embeddings/arcface_iam_cut20k.pt"
 
-plot_output_path: "plots/ce_cvl_agglr.png"
+plot_output_path: "plots/arcface_eucl_iam_agglr.png"
 debug: false

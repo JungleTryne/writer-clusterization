@@ -1,6 +1,6 @@
 model: encoder
-checkpoint_path: checkpoints/cross_entropy.ckpt
-model_config_path: configs/encoder_crossentropy/encoder_config_crossentropy.yaml
+checkpoint_path: checkpoints/arcface.ckpt
+model_config_path: configs/encoder_arcface/encoder_config_arcface.yaml
 
 dataset:
   type: "cvl_resized"
@@ -31,7 +31,7 @@ clustering_params:
 silhouette_params:
   metric: "euclidean"
 
-embedding_path: "embeddings/ce_cvl_cut20k.pt"
+embedding_path: "embeddings/arcface_cvl_cut20k.pt"
 
-plot_output_path: "plots/ce_cvl_agglr.png"
+plot_output_path: "plots/arcface_eucl_cvl_agglr.png"
 debug: false

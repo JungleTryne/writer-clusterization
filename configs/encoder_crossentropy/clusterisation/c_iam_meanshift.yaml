@@ -10,11 +10,13 @@ dataset:
 dataloader:
   batch_size: 128
   num_workers: 8
+  cut: 20000
 
-# Correct number: 657
+# Correct number: 117
 cluster:
-  min_samples: 600
-  max_samples: 690
+  correct: 117
+  min_samples: 10
+  max_samples: 350
   step: 10
 
 umap:
@@ -30,7 +32,7 @@ clustering_params:
 silhouette_params:
   metric: "euclidean"
 
-embedding_path: "embeddings/ce_iam.pt"
+embedding_path: "embeddings/ce_iam_cut20k.pt"
 
 plot_output_path: "plots/ce_iam_kmeans.png"
 debug: false

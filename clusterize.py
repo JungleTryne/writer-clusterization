@@ -58,6 +58,7 @@ def main(cluster_config_path: click.Path, visualize: bool):
     debug = test_config["debug"]
     dataset_root = test_config["dataset"]["root_path"]
     dataset_type = test_config["dataset"]["type"]
+    cut = test_config["dataset"]["cut"] if "cut" in test_config["dataset"] else None
     if dataset_type == "synthetic":
         test_fonts_file = "fonts_debug.json" if debug else test_config["dataset"]["fonts_test"]
         test_words = os.path.join(dataset_root, test_config["dataset"]["words_test"])
@@ -66,9 +67,9 @@ def main(cluster_config_path: click.Path, visualize: bool):
     elif dataset_type == "iam":
         test_dataset = IAMDataset(dataset_root, transform)
     elif dataset_type == "iam_resized":
-        test_dataset = IAMResizedDataset(dataset_root, transform)
+        test_dataset = IAMResizedDataset(dataset_root, transform, cut=cut)
     elif dataset_type == "cvl_resized":
-        test_dataset = CVLResizedDataset(dataset_root, transform)
+        test_dataset = CVLResizedDataset(dataset_root, transform, cut=cut)
     else:
         raise Exception(f"Dataset unknown type: {dataset_type}")
 
@@ -169,6 +170,8 @@ def main(cluster_config_path: click.Path, visualize: bool):
     df_s = pd.DataFrame(data=data_s)
 
     sns.lineplot(data=df_s, x="s_x", y="s_y")
+    plt.axvline(x=test_config["cluster"]["correct"])
+
     plt.savefig(test_config["plot_output_path"])
 
 

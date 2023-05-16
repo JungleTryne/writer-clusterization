@@ -1,6 +1,6 @@
 model: encoder
-checkpoint_path: checkpoints/cross_entropy.ckpt
-model_config_path: configs/encoder_crossentropy/encoder_config_crossentropy.yaml
+checkpoint_path: checkpoints/arcface.ckpt
+model_config_path: configs/encoder_arcface/encoder_config_arcface.yaml
 
 dataset:
   type: "cvl_resized"
@@ -24,14 +24,15 @@ umap:
   n_components: 32
   random_state: 129
 
-clustering_method: "AgglomerativeClustering"
+clustering_method: "KMeans"
 clustering_params:
-  metric: "euclidean"
+  n_init: 10
+  max_iter: 300
 
 silhouette_params:
   metric: "euclidean"
 
-embedding_path: "embeddings/ce_cvl_cut20k.pt"
+embedding_path: "embeddings/arcface_cvl_cut20k.pt"
 
-plot_output_path: "plots/ce_cvl_agglr.png"
+plot_output_path: "plots/arcface_eucl_cvl_kmeans.png"
 debug: false

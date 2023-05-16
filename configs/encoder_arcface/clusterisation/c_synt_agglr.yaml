@@ -14,6 +14,7 @@ dataloader:
 
 # Correct: 100
 cluster:
+  correct: 100
   min_samples: 50
   max_samples: 150
   step: 10

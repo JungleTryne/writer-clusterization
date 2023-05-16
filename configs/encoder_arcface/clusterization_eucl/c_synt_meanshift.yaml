@@ -1,6 +1,6 @@
 model: encoder
-checkpoint_path: checkpoints/cross_entropy.ckpt
-model_config_path: configs/encoder_crossentropy/encoder_config_crossentropy.yaml
+checkpoint_path: checkpoints/arcface.ckpt
+model_config_path: configs/encoder_arcface/encoder_config_arcface.yaml
 
 dataset:
   type: "synthetic"
@@ -19,7 +19,6 @@ cluster:
   max_samples: 150
   step: 10
 
-
 umap:
   n_neighbors: 30
   min_dist: 0.0
@@ -27,15 +26,14 @@ umap:
   random_state: 129
   metric: "cosine"
 
-clustering_method: "KMeans"
+clustering_method: "MeanShift"
 clustering_params:
-  n_init: 10
   max_iter: 300
 
 silhouette_params:
   metric: "euclidean"
 
-embedding_path: "embeddings/ce_synt_100.pt"
+embedding_path: "embeddings/arcface_synt_100.pt"
 
-plot_output_path: "plots/ce_synt_kmeans.png"
+plot_output_path: "plots/arcface_eucl_synt_kmeans.png"
 debug: false

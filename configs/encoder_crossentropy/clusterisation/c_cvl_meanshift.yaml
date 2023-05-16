@@ -5,14 +5,16 @@ model_config_path: configs/encoder_crossentropy/encoder_config_crossentropy.yaml
 dataset:
   type: "cvl_resized"
   root_path: data/cvl_resized
+  cut: 20000
 
 dataloader:
   batch_size: 128
   num_workers: 8
 
-# Correct number: 310
+# Correct number: 53
 cluster:
-  min_samples: 250
+  correct: 53
+  min_samples: 10
   max_samples: 350
   step: 10
 
@@ -29,7 +31,7 @@ clustering_params:
 silhouette_params:
   metric: "euclidean"
 
-embedding_path: "embeddings/ce_cvl.pt"
+embedding_path: "embeddings/ce_cvl_cut20k.pt"
 
 plot_output_path: "plots/ce_cvl_kmeans.png"
 debug: false
