@@ -27,7 +27,7 @@ from dataset.cvl_resized_dataset import CVLResizedDataset
 from model.supervised_encoder import SupervisedEncoder
 
 import sklearn.cluster
-from sklearn.metrics import silhouette_score, calinski_harabasz_score, rand_score
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, rand_score, adjusted_rand_score
 from sklearn import preprocessing
 
 import matplotlib.pyplot as plt
@@ -152,6 +152,7 @@ def main(cluster_config_path: click.Path, visualize: bool):
     s_scores = []
     c_scores = []
     r_scores = []
+    ra_scores = []
 
     labels_true = test_dataset.get_labels()
 
@@ -175,6 +176,7 @@ def main(cluster_config_path: click.Path, visualize: bool):
         s_scores.append(silhouette_score(embeddings_umap, labels, **test_config["silhouette_params"]))
         c_scores.append(calinski_harabasz_score(embeddings_umap, labels))
         r_scores.append(rand_score(labels_true, labels))
+        ra_scores.append(adjusted_rand_score(labels_true, labels))
 
         p_bar.set_description(f"Testing metrics: {n_samples} samples -> {s_scores[-1]} {c_scores[-1]} {r_scores[-1]}")
 
@@ -183,6 +185,7 @@ def main(cluster_config_path: click.Path, visualize: bool):
         "silhouette": s_scores,
         "calinski_harabasz": c_scores,
         "rand": r_scores,
+        "rand_adjusted": ra_scores,
     }
     df = pd.DataFrame(data=data)
 
@@ -195,6 +198,10 @@ def main(cluster_config_path: click.Path, visualize: bool):
     plt.savefig("calinski_harabasz_" + test_config["plot_output_path"])
 
     sns.lineplot(data=df_s, x="clusters_num", y="rand").set(title='Rand score')
+    plt.axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
+    plt.savefig("rand_" + test_config["plot_output_path"])
+
+    sns.lineplot(data=df_s, x="clusters_num", y="rand_adjusted").set(title='Adjusted Rand score')
     plt.axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
     plt.savefig("rand_" + test_config["plot_output_path"])
 
