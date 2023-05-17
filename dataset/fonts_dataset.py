@@ -56,7 +56,7 @@ class FontsDataset(Dataset):
 
     def get_labels(self):
         result = []
-        for idx in self.__len__():
+        for idx in range(self.__len__()):
             font_idx = idx // len(self.words_list)
             font_id = self._get_font_id(self.fonts_list[font_idx])
             result.append(font_id)

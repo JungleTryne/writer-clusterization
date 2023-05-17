@@ -159,7 +159,7 @@ def main(cluster_config_path: click.Path, visualize: bool):
     min_samples = test_config["cluster"]["min_samples"] 
     max_samples = test_config["cluster"]["max_samples"]
     step = test_config["cluster"]["step"]
-    n_samples_range = list(range(min_samples, max_samples, step))
+    n_samples_range = list(range(min_samples, max_samples + 1, step))
     p_bar = tqdm(n_samples_range, desc="Testing silhouette")
     for n_samples in p_bar:
         if test_config["clustering_method"] == "kmeans_gpu":
@@ -189,21 +189,24 @@ def main(cluster_config_path: click.Path, visualize: bool):
     }
     df = pd.DataFrame(data=data)
 
-    sns.lineplot(data=df_s, x="clusters_num", y="silhouette").set(title='Silhouette score')
-    plt.axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
-    plt.savefig("silhouette_" + test_config["plot_output_path"])
+    sns.set()
 
-    sns.lineplot(data=df_s, x="clusters_num", y="calinski_harabasz").set(title='Calinski-Harabasz score')
-    plt.axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
-    plt.savefig("calinski_harabasz_" + test_config["plot_output_path"])
+    fig, axes = plt.subplots(2, 2, figsize=(16,9))
 
-    sns.lineplot(data=df_s, x="clusters_num", y="rand").set(title='Rand score')
-    plt.axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
-    plt.savefig("rand_" + test_config["plot_output_path"])
+    sns.lineplot(ax=axes[0, 0], data=df, x="clusters_num", y="silhouette").set(title='Silhouette score')
+    axes[0, 0].axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
 
-    sns.lineplot(data=df_s, x="clusters_num", y="rand_adjusted").set(title='Adjusted Rand score')
-    plt.axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
-    plt.savefig("rand_" + test_config["plot_output_path"])
+    sns.lineplot(ax=axes[0, 1], data=df, x="clusters_num", y="calinski_harabasz").set(title='Calinski-Harabasz score')
+    axes[0, 1].axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
+
+    sns.lineplot(ax=axes[1, 0], data=df, x="clusters_num", y="rand").set(title='Rand score')
+    axes[1, 0].axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
+
+    sns.lineplot(ax=axes[1, 1], data=df, x="clusters_num", y="rand_adjusted").set(title='Adjusted Rand score')
+    axes[1, 1].axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
+
+    plt.subplots_adjust(hspace = 0.4)
+    plt.savefig(test_config["plot_output_path"])
 
 
 if __name__ == "__main__":
