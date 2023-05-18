@@ -1,0 +1,40 @@
+model: encoder
+checkpoint_path: checkpoints/cross_entropy.ckpt
+model_config_path: configs/encoder_crossentropy/encoder_config_crossentropy_old.yaml
+
+dataset:
+  type: "synthetic"
+  root_path: data/fonts
+  fonts_test: fonts_test_100.json
+  words_test: words_test.json
+
+dataloader:
+  batch_size: 128
+  num_workers: 8
+
+# Correct: 100
+cluster:
+  correct: 100
+  min_samples: 50
+  max_samples: 150
+  step: 10
+
+
+umap:
+  n_neighbors: 30
+  min_dist: 0.0
+  n_components: 32
+  random_state: 129
+  metric: "cosine"
+
+clustering_method: "MeanShift"
+clustering_params:
+  max_iter: 300
+
+silhouette_params:
+  metric: "euclidean"
+
+embedding_path: "embeddings/ce_synt_100.pt"
+
+plot_output_path: "plots/ce_synt_kmeans.png"
+debug: false

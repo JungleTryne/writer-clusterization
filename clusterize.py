@@ -24,7 +24,9 @@ from dataset.fonts_dataset import FontsDataset
 from dataset.iam_dataset import IAMDataset
 from dataset.iam_resized_dataset import IAMResizedDataset
 from dataset.cvl_resized_dataset import CVLResizedDataset
+
 from model.supervised_encoder import SupervisedEncoder
+from model.snn import SiameseNN
 
 import sklearn.cluster
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, rand_score, adjusted_rand_score
@@ -83,6 +85,8 @@ def main(cluster_config_path: click.Path, visualize: bool):
     print("Initializing model")
     if test_config["model"] == "encoder":
         encoder = SupervisedEncoder.load_from_checkpoint(test_config["checkpoint_path"], config=model_config, map_location=torch.device(DEVICE))
+    elif test_config["model"] == "snn":
+        encoder = SiameseNN.load_from_checkpoint(test_config["checkpoint_path"], config=model_config, map_location=torch.device(DEVICE), train_dataset=None, val_dataset=None)
     else:
         raise Exception(f"Invalid model: {test_config['model']}")
     encoder.eval()

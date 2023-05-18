@@ -2,10 +2,10 @@ model_name: encoder
 
 dataset:
   root_path: data/fonts
-  fonts_train: fonts_train_2000.json
+  fonts_train: fonts_train_500.json
   fonts_val: fonts_val_cut.json
   fonts_test: fonts_test_cut.json
-  words_train: words_train_4000.json
+  words_train: words_train.json
   words_val: words_val.json
   words_test: words_test.json
 
@@ -16,7 +16,7 @@ dataloader:
 model:
   backbone: resnet18
   criterion: arcface
-  number_of_classes: 2042
+  number_of_classes: 506
 
 optimizer:
   name: SGD
