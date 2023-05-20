@@ -1,6 +1,8 @@
 model_name: encoder
+checkpoint_path: checkpoints/cross_entropy_font_500_unl.ckpt
 
 dataset:
+  type: synthetic
   root_path: data/fonts
   fonts_train: fonts_train_500.json
   fonts_val: fonts_val_cut.json

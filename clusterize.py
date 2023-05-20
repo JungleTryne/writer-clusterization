@@ -11,6 +11,7 @@ warnings.filterwarnings("ignore", category=UserWarning, message="Please use DTen
 
 import os
 
+import numpy as np
 import click
 import torch
 import yaml
@@ -31,6 +32,7 @@ from model.snn import SiameseNN
 import sklearn.cluster
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, rand_score, adjusted_rand_score
 from sklearn import preprocessing
+from sklearn.decomposition import PCA
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -43,22 +45,11 @@ import kmeans_gpu
 DEVICE = "cuda"
 
 
-@click.command()
-@click.option("--cluster-config-path", type=click.Path(exists=True), required=True, help="Path to clusterization configuration")
-@click.option("--visualize", is_flag=True, help="Visualize")
-def main(cluster_config_path: click.Path, visualize: bool):
-    with open(str(cluster_config_path), "r") as config_file:
-        test_config = yaml.safe_load(config_file)
-
-    model_config_path = test_config["model_config_path"]
-    with open(str(model_config_path), "r") as config_file:
-        model_config = yaml.safe_load(config_file)
-
+def get_dataset(test_config):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
 
-    print("Initializing dataset")
     debug = test_config["debug"]
     dataset_root = test_config["dataset"]["root_path"]
     dataset_type = test_config["dataset"]["type"]
@@ -76,24 +67,37 @@ def main(cluster_config_path: click.Path, visualize: bool):
         test_dataset = CVLResizedDataset(dataset_root, transform, cut=cut)
     else:
         raise Exception(f"Dataset unknown type: {dataset_type}")
+    return test_dataset
 
-    print("Initializing dataloader")
-    batch_size = test_config["dataloader"]["batch_size"]
-    num_workers = test_config["dataloader"]["num_workers"]
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn)
 
-    print("Initializing model")
-    if test_config["model"] == "encoder":
-        encoder = SupervisedEncoder.load_from_checkpoint(test_config["checkpoint_path"], config=model_config, map_location=torch.device(DEVICE))
-    elif test_config["model"] == "snn":
-        encoder = SiameseNN.load_from_checkpoint(test_config["checkpoint_path"], config=model_config, map_location=torch.device(DEVICE), train_dataset=None, val_dataset=None)
+def get_model(test_config):
+    model_config_path = test_config["model_config_path"]
+    with open(str(model_config_path), "r") as config_file:
+        model_config = yaml.safe_load(config_file)
+
+    if model_config["model"] == "encoder":
+        encoder = SupervisedEncoder.load_from_checkpoint(
+            model_config["checkpoint_path"], 
+            config=model_config, 
+            map_location=torch.device(DEVICE)
+        )
+    elif model_config["model"] == "snn":
+        encoder = SiameseNN.load_from_checkpoint(
+            model_config["checkpoint_path"], 
+            config=model_config, 
+            map_location=torch.device(DEVICE), 
+            train_dataset=None, 
+            val_dataset=None
+        )
     else:
-        raise Exception(f"Invalid model: {test_config['model']}")
+        raise Exception(f"Invalid model: {model_config['model']}")
     encoder.eval()
     encoder.to(DEVICE)
+    return encoder
 
-    print("Creating embeddings")
-    embeddings_path = test_config["embedding_path"]
+
+def get_full_embeddings(test_config, test_loader, encoder, run_name):
+    embeddings_path = os.path.join(test_config["embedding_path"], f"{run_name}.pt")
     if os.path.exists(embeddings_path):
         embeddings = torch.load(embeddings_path)
         print("Loaded embeddings from cache")
@@ -110,49 +114,42 @@ def main(cluster_config_path: click.Path, visualize: bool):
         torch.save(embeddings, embeddings_path)
         
     embeddings = embeddings.detach().cpu().numpy()
-    
-    print("Embeddings shape:", embeddings.shape)
+    return embeddings
 
-    if "umap" not in test_config:
-        embeddings_umap = embeddings
+
+def apply_umap(test_config, embeddings, test_dataset, run_name):
+    umap_embeddings_path = os.path.join(test_config["embedding_path"], f"{run_name}.umap")
+    umap_config = test_config["umap"]
+
+    if os.path.exists(umap_embeddings_path) and False:
+        embeddings = torch.load(umap_embeddings_path)
+        print("Loaded UMAP embeddings from cache")
     else:
-        print("Applying UMAP...")
-        umap_embeddings_path = embeddings_path + ".umap"
-        umap_config = test_config["umap"]
+        print("Training UMAP")
+        labels = test_dataset.get_labels()
+        reducer = umap.UMAP(**umap_config)
 
-        if visualize:
-            raise Exception("It is broken with cache")
-            umap_config["n_components"] = 2
+        if "umap_training" in test_config:
+            umap_alpha = test_config["umap_training"]["alpha"]
+            index = np.random.choice(labels.shape[0], int(labels.shape[0] * umap_alpha), replace=False)  
+            umap_train_embedd = embeddings[index]
+            umap_train_labels = labels[index]
 
-        if os.path.exists(umap_embeddings_path):
-            embeddings_umap = torch.load(umap_embeddings_path)
-            print("Loaded UMAP embeddings from cache")
+            print("UMAP Training...")        
+            reducer.fit(umap_train_embedd, umap_train_labels)
         else:
-            reducer = umap.UMAP(**umap_config)
+            print("UMAP fitting without training...")
             reducer.fit(embeddings)
-            embeddings_umap = reducer.transform(embeddings)
-            embeddings_umap = preprocessing.StandardScaler().fit_transform(embeddings_umap)
-            torch.save(embeddings_umap, umap_embeddings_path)
-            print("UMAP result shape:", embeddings_umap.shape)
 
-    if visualize:
-        data_viz = {
-            "x": embeddings_umap[:, 0],
-            "y": embeddings_umap[:, 1],
-        }
-        df = pd.DataFrame(data=data_viz)
-        sns.scatterplot(data=df, x="x", y="y")
-        plt.show()
-        return
+        print("Transforming data")
+        embeddings = reducer.transform(embeddings)
+        torch.save(embeddings, umap_embeddings_path)
+        print("UMAP result shape:", embeddings.shape)
 
-    if test_config["clustering_method"] == "MeanShift":
-        print("{} clustring method determines the number of clusters itself".format(test_config["clustering_method"]))
-        clustering = getattr(sklearn.cluster, test_config["clustering_method"])(**test_config["clustering_params"]).fit(embeddings_umap)
-        print(f"Number of clusters: {clustering.labels_.max()}")
-        score = silhouette_score(embeddings_umap, clustering.labels_, **test_config["silhouette_params"])
-        print(f"Silhouette score: {score}")
-        return
+    return embeddings
 
+
+def evaluate(test_config, embeddings, test_dataset):
     s_scores = []
     c_scores = []
     r_scores = []
@@ -168,34 +165,29 @@ def main(cluster_config_path: click.Path, visualize: bool):
     for n_samples in p_bar:
         if test_config["clustering_method"] == "kmeans_gpu":
             kmeans = kmeans_gpu.KMeans(n_clusters=n_samples, **test_config["clustering_params"])
-            embeddings_torch = torch.from_numpy(embeddings_umap)
+            embeddings_torch = torch.from_numpy(embeddings)
             labels, _ = kmeans.fit_predict(embeddings_torch)
             labels = labels.detach().cpu().numpy()
         else:
             clustering = getattr(sklearn.cluster, test_config["clustering_method"])(
                 n_clusters=n_samples, **test_config["clustering_params"]
-            ).fit(embeddings_umap)
+            ).fit(embeddings)
             labels = clustering.labels_
 
-        s_scores.append(silhouette_score(embeddings_umap, labels, **test_config["silhouette_params"]))
-        c_scores.append(calinski_harabasz_score(embeddings_umap, labels))
+        s_scores.append(silhouette_score(embeddings, labels, **test_config["silhouette_params"]))
+        c_scores.append(calinski_harabasz_score(embeddings, labels))
         r_scores.append(rand_score(labels_true, labels))
         ra_scores.append(adjusted_rand_score(labels_true, labels))
 
-        p_bar.set_description(f"Testing metrics: {n_samples} samples -> {s_scores[-1]} {c_scores[-1]} {r_scores[-1]}")
+        p_bar.set_description(f"Testing metrics: {n_samples} samples -> {s_scores[-1]} {c_scores[-1]} {ra_scores[-1]}")
 
-    data = {
-        "clusters_num": n_samples_range,
-        "silhouette": s_scores,
-        "calinski_harabasz": c_scores,
-        "rand": r_scores,
-        "rand_adjusted": ra_scores,
-    }
-    df = pd.DataFrame(data=data)
+    return s_scores, c_scores, r_scores, ra_scores, n_samples_range
 
+
+def draw_results(test_config, df, plot_name):
     sns.set()
 
-    fig, axes = plt.subplots(2, 2, figsize=(16,9))
+    _, axes = plt.subplots(2, 2, figsize=(16,9))
 
     sns.lineplot(ax=axes[0, 0], data=df, x="clusters_num", y="silhouette").set(title='Silhouette score')
     axes[0, 0].axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
@@ -210,7 +202,54 @@ def main(cluster_config_path: click.Path, visualize: bool):
     axes[1, 1].axvline(x=test_config["cluster"]["correct"], color="r", alpha=0.5, linestyle="--")
 
     plt.subplots_adjust(hspace = 0.4)
-    plt.savefig(test_config["plot_output_path"])
+    plt.savefig(os.path.join(test_config["plot_output_path"] + f"{plot_name}.jpg"))
+
+
+@click.command()
+@click.option("--cluster-config-path", type=click.Path(exists=True), required=True, help="Path to clusterization configuration")
+@click.option("--model-config-path", type=click.Path(exists=True), required=True)
+def main(cluster_config_path: str, model_config_path: str):
+    run_name = f"{os.path.basename(cluster_config_path)[0]}-{os.path.basename(model_config_path)[0]}"
+    print("Run name:", run_name)
+
+    with open(cluster_config_path, "r") as config_file:
+        test_config = yaml.safe_load(config_file)
+
+    test_config["model_config_path"] = model_config_path
+
+    print("Initializing dataset")
+    test_dataset = get_dataset(test_config)
+
+    print("Initializing dataloader")
+    batch_size = test_config["dataloader"]["batch_size"]
+    num_workers = test_config["dataloader"]["num_workers"]
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn)
+
+    print("Initializing model")
+    encoder = get_model(test_config)
+
+    print("Creating embeddings")
+    embeddings = get_full_embeddings(test_config, test_loader, encoder, run_name)
+    print("Embeddings shape:", embeddings.shape)
+
+    print("Applying PCA")
+    embeddings = PCA(n_components=100, svd_solver="randomized").fit_transform(embeddings)
+
+    if "umap" in test_config:
+        print("Applying UMAP")
+        embeddings = apply_umap(test_config, embeddings, test_dataset, run_name)
+
+    s_scores, c_scores, r_scores, ra_scores, n_samples_range = evaluate(test_config, embeddings, test_dataset)
+    data = {
+        "clusters_num": n_samples_range,
+        "silhouette": s_scores,
+        "calinski_harabasz": c_scores,
+        "rand": r_scores,
+        "rand_adjusted": ra_scores,
+    }
+    df = pd.DataFrame(data=data)
+
+    draw_results(test_config, df, run_name)
 
 
 if __name__ == "__main__":

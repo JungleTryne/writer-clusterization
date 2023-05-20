@@ -13,6 +13,8 @@ from torch.utils.data import DataLoader
 
 from dataloader.collate import collate_fn
 from dataset.fonts_dataset import FontsDataset
+from dataset.cvl_resized_dataset import CVLResizedDataset
+from dataset.iam_resized_dataset import IAMResizedDataset
 
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
@@ -135,21 +137,39 @@ def train_encoder(config: Dict[str, Any]):
     debug = config["debug"]
 
     dataset_root = config["dataset"]["root_path"]
-
-    train_fonts_file = "fonts_debug.json" if debug else config["dataset"]["fonts_train"]
-    val_fonts_file = "fonts_debug.json" if debug else config["dataset"]["fonts_val"]
-
-    train_words = os.path.join(dataset_root, config["dataset"]["words_train"])
-    val_words = os.path.join(dataset_root, config["dataset"]["words_val"])
-    train_fonts = os.path.join(dataset_root, train_fonts_file)
-    val_fonts = os.path.join(dataset_root, val_fonts_file)
+    dataset_type = config["dataset"]["type"]
 
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
 
-    train_dataset = FontsDataset(dataset_root, train_words, train_fonts, transform)
-    val_dataset = FontsDataset(dataset_root, val_words, val_fonts, transform)
+    if dataset_type == "synthetic":
+        train_fonts_file = "fonts_debug.json" if debug else config["dataset"]["fonts_train"]
+        val_fonts_file = "fonts_debug.json" if debug else config["dataset"]["fonts_val"]
+
+        train_words = os.path.join(dataset_root, config["dataset"]["words_train"])
+        val_words = os.path.join(dataset_root, config["dataset"]["words_val"])
+        train_fonts = os.path.join(dataset_root, train_fonts_file)
+        val_fonts = os.path.join(dataset_root, val_fonts_file)
+
+        train_dataset = FontsDataset(dataset_root, train_words, train_fonts, transform)
+        val_dataset = FontsDataset(dataset_root, val_words, val_fonts, transform)
+    elif dataset_type == "cvl_resized":
+        dataset = CVLResizedDataset(dataset_root, transform)
+        train_size = int(len(dataset) * 0.9)
+        val_size = len(dataset) - train_size
+        train_dataset, val_dataset = torch.utils.data.random_split(
+            dataset, [train_size, val_size]
+        )
+    elif dataset_type == "iam_resized":
+        dataset = IAMResizedDataset(dataset_root, transform)
+        train_size = int(len(dataset) * 0.9)
+        val_size = len(dataset) - train_size
+        train_dataset, val_dataset = torch.utils.data.random_split(
+            dataset, [train_size, val_size]
+        )
+    else:
+        raise Exception("Unknown dataset")
 
     model = SupervisedEncoder(config)
 
@@ -157,7 +177,7 @@ def train_encoder(config: Dict[str, Any]):
     num_workers = config["dataloader"]["num_workers"]
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn)
-    logger = TensorBoardLogger("tb_logs", name="resnet-18-metric-learning")
+    logger = TensorBoardLogger("tb_logs", name="resnet-18-metric-learning-" + dataset_type + "-" + config["model"]["criterion"])
 
     trainer = pl.Trainer(
         logger=logger,

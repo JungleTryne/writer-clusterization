@@ -14,15 +14,15 @@ dataloader:
 # Correct number: 53
 cluster:
   correct: 53
-  min_samples: 10
-  max_samples: 350
+  min_samples: 20
+  max_samples: 120
   step: 10
 
 umap:
-  n_neighbors: 30
+  n_neighbors: 120
   min_dist: 0.0
-  n_components: 32
-  random_state: 129
+  n_components: 10
+  random_state: 42
 
 clustering_method: "KMeans"
 clustering_params:
@@ -32,7 +32,7 @@ clustering_params:
 silhouette_params:
   metric: "euclidean"
 
-embedding_path: "embeddings/snn_cvl_cut20k.pt"
+embedding_path: "embeddings/"
 
-plot_output_path: "plots/snn_cvl_kmeans.png"
+plot_output_path: "plots/"
 debug: false

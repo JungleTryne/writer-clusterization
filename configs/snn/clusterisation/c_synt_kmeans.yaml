@@ -5,27 +5,25 @@ model_config_path: configs/snn/snn_config.yaml
 dataset:
   type: "synthetic"
   root_path: data/fonts
-  fonts_test: fonts_test_100.json
+  fonts_test: fonts_test_cut.json
   words_test: words_test.json
 
 dataloader:
   batch_size: 128
   num_workers: 8
 
-# Correct: 100
+# Correct: 83
 cluster:
-  correct: 100
-  min_samples: 50
+  correct: 83
+  min_samples: 30
   max_samples: 150
   step: 10
 
-
 umap:
-  n_neighbors: 30
+  n_neighbors: 120
   min_dist: 0.0
-  n_components: 32
-  random_state: 129
-  metric: "cosine"
+  n_components: 10
+  random_state: 42
 
 clustering_method: "KMeans"
 clustering_params:
@@ -35,7 +33,7 @@ clustering_params:
 silhouette_params:
   metric: "euclidean"
 
-embedding_path: "embeddings/snn_synt_100.pt"
+embedding_path: "embeddings/"
 
-plot_output_path: "plots/snn_synt_kmeans.png"
+plot_output_path: "plots/"
 debug: false

@@ -1,0 +1,36 @@
+model_name: encoder
+checkpoint_path: ~
+
+dataset:
+  type: iam_resized
+  root_path: data/iam_resized
+  
+dataloader:
+  batch_size: 128
+  num_workers: 48
+
+model:
+  backbone: resnet18
+  criterion: arcface
+  number_of_classes: 672
+
+optimizer:
+  name: SGD
+  params:
+    lr: 0.1
+    momentum: 0.9
+
+scheduler:
+  name: MultiStepLR
+  params:
+    milestones:
+      - 6
+      - 9
+    gamma: 0.1
+
+training:
+  epochs: 50
+  device: cuda
+
+debug: false
+logs: logs

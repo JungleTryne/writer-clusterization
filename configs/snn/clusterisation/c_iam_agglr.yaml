@@ -14,15 +14,15 @@ dataloader:
 # Correct number: 117
 cluster:
   correct: 117
-  min_samples: 10
-  max_samples: 350
+  min_samples: 50
+  max_samples: 180
   step: 10
 
 umap:
-  n_neighbors: 30
+  n_neighbors: 120
   min_dist: 0.0
-  n_components: 32
-  random_state: 129
+  n_components: 10
+  random_state: 42
 
 clustering_method: "AgglomerativeClustering"
 clustering_params:
@@ -31,7 +31,7 @@ clustering_params:
 silhouette_params:
   metric: "euclidean"
 
-embedding_path: "embeddings/snn_iam_cut20k.pt"
+embedding_path: "embeddings/"
 
-plot_output_path: "plots/snn_iam_agglr.png"
+plot_output_path: "plots/"
 debug: false

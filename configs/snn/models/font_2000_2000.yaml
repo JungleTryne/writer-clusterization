@@ -1,4 +1,5 @@
 model_name: snn
+checkpoint_path: checkpoints/snn.ckpt
 
 dataset:
   root_path: data/fonts

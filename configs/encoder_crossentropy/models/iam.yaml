@@ -1,14 +1,10 @@
 model_name: encoder
+checkpoint_path: ~
 
 dataset:
-  root_path: data/fonts
-  fonts_train: fonts_train_2000.json
-  fonts_val: fonts_val_cut.json
-  fonts_test: fonts_test_cut.json
-  words_train: words_train_2000.json
-  words_val: words_val.json
-  words_test: words_test.json
-
+  type: iam_resized
+  root_path: data/iam_resized
+  
 dataloader:
   batch_size: 128
   num_workers: 48
@@ -16,12 +12,12 @@ dataloader:
 model:
   backbone: resnet18
   criterion: cross_entropy
-  number_of_classes: 2042
+  number_of_classes: 672
 
 optimizer:
   name: Adam
   params:
-    lr: 0.00002
+    lr: 0.001
 
 scheduler:
   name: ExponentialLR
@@ -29,7 +25,7 @@ scheduler:
     gamma: 0.999974416048
 
 training:
-  epochs: 15
+  epochs: 100
   device: cuda
 
 debug: false
